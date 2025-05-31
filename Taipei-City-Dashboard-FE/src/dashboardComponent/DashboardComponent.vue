@@ -224,6 +224,34 @@ function returnChartComponent(name, svg) {
 		return svg ? MapLegendSvg : MapLegend;
 	}
 }
+
+// 添加一個函數用於呼叫 checkRank API
+async function callCheckRankAPI(config) {
+	try {
+		// 首先發出 API 請求
+		const response = await fetch('http://localhost:8088/api/v1/checkRank', {
+			method: 'GET',
+			// 不要設置任何額外的請求頭，讓瀏覽器自動處理
+		});
+		
+		// 檢查響應狀態
+		if (!response.ok) {
+			console.error('API 請求失敗:', response.status, response.statusText);
+			return;
+		}
+		
+		// 解析 JSON 響應
+		const data = await response.json();
+		console.log('獲取的組件排名數據:', data);
+		
+		// 完成後再觸發原來的 info 事件
+		emits("info", config);
+	} catch (error) {
+		console.error('呼叫 API 時發生錯誤:', error);
+		// 發生錯誤時也觸發原來的 info 事件
+		emits("info", config);
+	}
+}
 </script>
 
 <template>
@@ -500,7 +528,7 @@ function returnChartComponent(name, svg) {
       <div v-else />
       <button
         v-if="infoBtn"
-        @click="$emit('info', config)"
+        @click="callCheckRankAPI(config)"
       >
         <p>{{ infoBtnText }}</p>
         <span>arrow_circle_right</span>

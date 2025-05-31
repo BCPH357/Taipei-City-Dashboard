@@ -20,14 +20,22 @@ import (
 
 // AddCommonHeaders adds common headers that will be appended to all requests.
 func AddCommonHeaders(c *gin.Context) {
-	// c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
-	c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-	c.Header("Access-Control-Allow-Credentials", "true")
+	// 允許所有來源，不做任何限制
+	c.Header("Access-Control-Allow-Origin", "*")
+	// 允許所有可能的請求頭
+	c.Header("Access-Control-Allow-Headers", "*")
+	// 允許所有可能的請求方法
+	c.Header("Access-Control-Allow-Methods", "*")
+	// 暴露所有頭部
+	c.Header("Access-Control-Expose-Headers", "*")
+	// 不使用 credentials 模式，避免與 * 衝突
+	c.Header("Access-Control-Allow-Credentials", "false")
+	// 設置更長的預檢請求緩存時間，減少預檢請求次數
+	c.Header("Access-Control-Max-Age", "86400")
 
+	// 處理 OPTIONS 預檢請求
 	if c.Request.Method == "OPTIONS" {
-		c.AbortWithStatus(http.StatusNoContent)
+		c.AbortWithStatus(http.StatusOK) // 改用 200 而不是 204
 	}
 
 	c.Next()
