@@ -227,6 +227,9 @@ function returnChartComponent(name, svg) {
 
 // 添加一個函數用於呼叫 checkRank API
 async function callCheckRankAPI(config) {
+	// 在控制台輸出該組件的 index
+	console.log(`點擊的組件 index: ${config.index}`);
+	
 	try {
 		// 首先發出 API 請求
 		const response = await fetch('http://localhost:8088/api/v1/checkRank', {
@@ -243,6 +246,11 @@ async function callCheckRankAPI(config) {
 		// 解析 JSON 響應
 		const data = await response.json();
 		console.log('獲取的組件排名數據:', data);
+		
+		// 如果組件排名數據中包含當前組件的排名，顯示它
+		if (data.rankMap && data.rankMap[config.index]) {
+			console.log(`組件 "${config.name}" (${config.index}) 的排名為: ${data.rankMap[config.index]}`);
+		}
 		
 		// 完成後再觸發原來的 info 事件
 		emits("info", config);
