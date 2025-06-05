@@ -79,6 +79,7 @@ func configureComponentRoutes() {
 	componentRoutes.Use(middleware.LimitTotalRequests(global.ComponentLimitTotalRequestsTimes, global.LimitRequestsDuration))
 	{
 		componentRoutes.GET("/", controllers.GetAllComponents)
+		componentRoutes.GET("/search", controllers.SearchComponentNames)
 		componentRoutes.GET("/:id", controllers.GetComponentByID)
 		componentRoutes.GET("/:id/all", controllers.GetComponentByIDAll)
 		componentRoutes.GET("/:id/chart", controllers.GetComponentChartData)
@@ -105,6 +106,9 @@ func configureDashboardRoutes() {
 			GET("/", controllers.GetAllDashboards)
 		dashboardRoutes.
 			GET("/:index", controllers.GetDashboardByIndex)
+		// 修改dashboards中的components欄位
+		dashboardRoutes.PATCH("/components", controllers.UpdateDashboardComponentsHandler)
+		dashboardRoutes.POST("/update-components", controllers.UpdateDashboardComponentsByName)
 	}
 	dashboardRoutes.Use(middleware.IsLoggedIn())
 	{

@@ -41,6 +41,17 @@ type componentQuery struct {
 	SearchByName  string `form:"searchbyname"`
 }
 
+// 用來修改dashboard中的components欄位
+type UpdateComponentsRequest struct {
+    Index      string `json:"index" binding:"required"`
+    Components []int  `json:"components" binding:"required"`
+}
+
+type UpdateDashboardRequest struct {
+	Index string `json:"index" binding:"required"`
+	Name  string `json:"name" binding:"required"`
+}
+
 // FIXME:
 // 這邊的 component 是半成品，無法直接使用
 // 缺少 components.index(component_charts.index)，後續需要設計流程補上
@@ -321,4 +332,62 @@ func DeleteComponent(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "chart_deleted": deleteChartStatus, "map_deleted": deleteMapStatus})
+}
+
+func SearchComponentNames(c *gin.Context) {
+	keyword := c.Query("key")
+	if keyword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Keyword cannot be empty"})
+		return
+	}
+
+	results, err := models.SearchComponentNamesByKeyword(keyword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "data": results})
+}
+
+func UpdateDashboardComponentsHandler(c *gin.Context) {
+    var req UpdateComponentsRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid request body"})
+        return
+    }
+
+    err := models.UpdateDashboardComponents(req.Index, req.Components)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"status": "success"})
+}
+
+func UpdateDashboardComponentsByName(c *gin.Context) {
+	var req UpdateDashboardRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid request"})
+		return
+	}
+
+	ids, err := models.UpdateDashboardComponentsByName(req.Index, req.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	if len(ids) == 0 {
+		c.JSON(http.StatusOK, gin.H{"status": "success", "message": "沒有符合的 components", "updated": false})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"updated": true,
+		"index":   req.Index,
+		"ids":     ids,
+	})
 }
