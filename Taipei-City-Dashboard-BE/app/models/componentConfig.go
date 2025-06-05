@@ -428,3 +428,45 @@ func DeleteComponent(id int, index string, mapConfigIDs pq.Int64Array) (deleteCh
 
 	return true, true, nil
 }
+
+func SearchComponentNamesByKeyword(keyword string) ([]Component, error) {
+	var components []Component
+	err := DBManager.Table("components").Where("name LIKE ?", "%"+keyword+"%").Find(&components).Error
+	return components, err
+}
+
+func UpdateDashboardComponents(index string, componentIDs []int) error {
+    return DBManager.Table("dashboards").
+        Where("index = ?", index).
+        Update("components", pq.Array(componentIDs)).
+        Error
+}
+
+// UpdateDashboardComponentsByName 查找符合名稱的 component id 並更新 dashboard
+func UpdateDashboardComponentsByName(index string, name string) ([]int, error) {
+	var ids []int
+
+	// 1. 查找符合名稱的 component ids
+	err := DBManager.Table("components").
+		Where("name LIKE ?", "%"+name+"%").
+		Pluck("id", &ids).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 如果找不到，就不用更新
+	if len(ids) == 0 {
+		return ids, nil
+	}
+
+	// 2. 更新 dashboards 的 components 欄位
+	err = DBManager.Exec(
+		"UPDATE dashboards SET components = ? WHERE index = ?",
+		pq.Array(ids), index,
+	).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
